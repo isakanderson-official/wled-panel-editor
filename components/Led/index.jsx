@@ -14,10 +14,12 @@ function LEDMatrix({
   );
   const [drawColor, setDrawColor] = useState(initalDrawColor);
   const [ledMatrix, setLedMatrix] = useState(blankSlate);
-  const [textInput, setTextInput] = useState('');
-  const [colorInput, setColorInput] = useState('');
+  const [textInput, setTextInput] = useState('123456');
+  const [colorInput, setColorInput] = useState(initalDrawColor);
+  const [brightness, setBrightness] = useState(10);
   const [errors, setErrors] = useState({
     maxLength: '',
+    brightness: '',
   });
 
   const handleClick = (x, y) => {
@@ -40,6 +42,26 @@ function LEDMatrix({
     }
     setTextInput(value);
   };
+
+  const handleBrightnessInput = (event) => {
+    const { value } = event.target;
+    console.log(value);
+
+    if (value > 100) {
+      setErrors((errors) => ({
+        ...errors,
+        brightness: 'Max Brightness Reached',
+      }));
+      return;
+    }
+    if (value.length < brightness.length) {
+      setErrors((errors) => ({ ...errors, brightness: '' }));
+    } else if (errors?.brightness?.length) {
+      return;
+    }
+    setBrightness(value);
+  };
+
   const handleColorInput = (event) => {
     const { value } = event.target;
     console.log(value);
@@ -79,7 +101,7 @@ function LEDMatrix({
     ({ arrayOfFontValues });
     const joinedTextArrays = joinMatrixsHorizontally(arrayOfFontValues);
     try {
-      const padded = pad2dArray(joinedTextArrays, width, height, 1);
+      const padded = pad2dArray(joinedTextArrays, width, height, 2);
       ({ joinedTextArrays });
       ({ padded });
       setLedMatrix(padded);
@@ -97,8 +119,8 @@ function LEDMatrix({
       drawColor
     );
 
-    sendData(convertedArray);
-  }, [ledMatrix, drawColor]);
+    sendData(convertedArray, brightness);
+  }, [ledMatrix, drawColor, brightness]);
 
   return (
     <div className='text-base'>
@@ -135,6 +157,15 @@ function LEDMatrix({
             className='bg-gray-200 py-2 px-4'
             onChange={handleColorInput}
             value={colorInput}
+          />
+        </div>
+        <div>
+          <p>Set Brightness (max 100%)</p>
+          <input
+            className='bg-gray-200 py-2 px-4'
+            onChange={handleBrightnessInput}
+            value={brightness}
+            type='number'
           />
         </div>
       </div>
