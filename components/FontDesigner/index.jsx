@@ -1,41 +1,97 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function FontDesigner({
   height = 6,
   width = 4,
   backgroundColor = '000000',
   drawColor = '2D59CD',
+  maxHeight = 8,
+  maxWidth = 30,
 }) {
-  const blankSlate = Array.from({ length: height }, () =>
-    Array.from({ length: width }, () => false)
-  );
-  const [ledMatrix, setLedMatrix] = useState(blankSlate);
+  const [editorWidth, setEditorWidth] = useState(width);
+  const [editorHeight, setEditorHeight] = useState(height);
+  const [canvas, setCanvas] = useState([]);
   const [fontArray, setFontArray] = useState('');
 
+  const handleCanvasSizeChange = (event, maxHeight, maxWidth) => {
+    const { value, name } = event.target;
+    switch (name) {
+      case 'editorHeight':
+        if (value > maxHeight) {
+          console.error('Max Height Reached');
+          return;
+        }
+        setEditorHeight(value);
+        break;
+      case 'editorWidth':
+        if (value > maxWidth) {
+          console.error('Max Width Reached');
+          return;
+        }
+        setEditorWidth(value);
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  const setBlankSlate = () => {
+    const blankSlate = Array.from({ length: editorHeight }, () =>
+      Array.from({ length: editorWidth }, () => false)
+    );
+    setCanvas(blankSlate);
+  };
+
   const handleClick = (x, y) => {
-    const newMatrix = ledMatrix.map((row) => [...row]);
+    const newMatrix = canvas.map((row) => [...row]);
     if (newMatrix[y][x] === true) {
       newMatrix[y][x] = false;
     } else {
       newMatrix[y][x] = true;
     }
-    setLedMatrix(newMatrix);
+    setCanvas(newMatrix);
   };
 
   const handleGenerateClick = () => {
-    console.log('FONT MATRIX', ledMatrix);
-    setFontArray(JSON.stringify(ledMatrix));
+    'FONT MATRIX', canvas;
+    setFontArray(JSON.stringify(canvas));
   };
   const handleClearClick = () => {
-    console.log('FONT MATRIX', ledMatrix);
-    setLedMatrix(blankSlate);
+    'FONT MATRIX', canvas;
+    setBlankSlate();
     setFontArray('');
   };
 
+  useEffect(() => {
+    setBlankSlate();
+  }, []);
+
+  useEffect(() => {
+    setBlankSlate();
+  }, [editorHeight, editorWidth]);
+
   return (
-    <div className='flex'>
+    <div className='flex flex-col gap-2 text-base'>
+      <label>Canvas Width</label>
+      <input
+        name='editorWidth'
+        className='border-2 broder-gray-200 w-32'
+        value={editorWidth}
+        onChange={(e) => handleCanvasSizeChange(e, maxHeight, maxWidth)}
+        type='number'
+      />
+      <label>Canvas Height</label>
+      <input
+        name='editorHeight'
+        className='border-2 broder-gray-200 w-32'
+        value={editorHeight}
+        onChange={(e) => handleCanvasSizeChange(e, maxHeight, maxWidth)}
+        type='number'
+      />
+      {/* GRID */}
       <div>
-        {ledMatrix.map((row, y) => (
+        {canvas.map((row, y) => (
           <div key={`row ${y}`} id={y} className='flex'>
             {row.map((pixel, x) => {
               return (

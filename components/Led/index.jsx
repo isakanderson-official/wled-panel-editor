@@ -7,13 +7,18 @@ function LEDMatrix({
   height = 8,
   width = 32,
   backgroundColor = '000000',
-  drawColor = '2D59CD',
+  initalDrawColor = 'ff1985',
 }) {
   const blankSlate = Array.from({ length: height }, () =>
     Array.from({ length: width }, () => false)
   );
+  const [drawColor, setDrawColor] = useState(initalDrawColor);
   const [ledMatrix, setLedMatrix] = useState(blankSlate);
   const [textInput, setTextInput] = useState('');
+  const [colorInput, setColorInput] = useState('');
+  const [errors, setErrors] = useState({
+    maxLength: '',
+  });
 
   const handleClick = (x, y) => {
     const newMatrix = ledMatrix.map((row) => [...row]);
@@ -27,31 +32,61 @@ function LEDMatrix({
 
   const handleTextInput = (event) => {
     const { value } = event.target;
-    setTextInput(value);
     console.log(value);
+    if (value.length < textInput.length) {
+      setErrors((errors) => ({ ...errors, maxLength: '' }));
+    } else if (errors.maxLength.length) {
+      return;
+    }
+    setTextInput(value);
+  };
+  const handleColorInput = (event) => {
+    const { value } = event.target;
+    console.log(value);
+    if (value.length < textInput.length) {
+      setErrors((errors) => ({ ...errors, maxLength: '' }));
+    } else if (errors.maxLength.length) {
+      return;
+    }
+    setColorInput(value);
+    if (value.length === 6) {
+      setDrawColor(value);
+    }
   };
 
   useEffect(() => {
     //Calculate New Matrix Array baised off of text and custom font
+    const arrayOfFontValues = [];
     const inputSplitArray = textInput.split('');
     if (inputSplitArray.length < 1) {
       setLedMatrix(blankSlate);
       return;
     }
-    const arrayOfFontValues = [];
     for (const character of inputSplitArray) {
-      const characterArray = font[character];
-      if (!characterArray) return;
-      console.log(characterArray);
+      let transformedChar =
+        typeof character === 'number'
+          ? Number(character)
+          : String(character).toLowerCase();
+      const characterArray = font[transformedChar];
+      if (!characterArray) {
+        console.error('That character is not found in the selected font');
+        return;
+        // throw new Error('That character is not found in the selected font');
+      }
+      characterArray;
       arrayOfFontValues.push(characterArray);
     }
-    console.log({ arrayOfFontValues });
+    ({ arrayOfFontValues });
     const joinedTextArrays = joinMatrixsHorizontally(arrayOfFontValues);
-
-    const padded = pad2dArray(joinedTextArrays, width, height, 1);
-    console.log({ joinedTextArrays });
-    console.log({ padded });
-    setLedMatrix(padded);
+    try {
+      const padded = pad2dArray(joinedTextArrays, width, height, 1);
+      ({ joinedTextArrays });
+      ({ padded });
+      setLedMatrix(padded);
+    } catch (err) {
+      console.error('No more space!');
+      setErrors((errors) => ({ ...errors, maxLength: 'No more space!' }));
+    }
   }, [textInput]);
 
   // This Converts our true false values to our background and drawColor hex values and sends to WLED
@@ -63,10 +98,10 @@ function LEDMatrix({
     );
 
     sendData(convertedArray);
-  }, [ledMatrix]);
+  }, [ledMatrix, drawColor]);
 
   return (
-    <>
+    <div className='text-base'>
       <div>
         {ledMatrix.map((row, y) => (
           <div key={`row ${y}`} id={y} className='flex'>
@@ -85,12 +120,25 @@ function LEDMatrix({
           </div>
         ))}
       </div>
-      <input
-        className='bg-gray-200 py-2 px-4'
-        onChange={handleTextInput}
-        value={textInput}
-      />
-    </>
+      <div className='flex gap-2'>
+        <div>
+          <p>Type Number Here</p>
+          <input
+            className='bg-gray-200 py-2 px-4'
+            onChange={handleTextInput}
+            value={textInput}
+          />
+        </div>
+        <div>
+          <p>Type Hex Color Code Here</p>
+          <input
+            className='bg-gray-200 py-2 px-4'
+            onChange={handleColorInput}
+            value={colorInput}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 export default LEDMatrix;
