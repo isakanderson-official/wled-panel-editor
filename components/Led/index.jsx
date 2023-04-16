@@ -21,6 +21,7 @@ function LEDMatrix({
     maxLength: '',
     brightness: '',
   });
+  const [leftPadding, setLeftPadding] = useState(0);
 
   const handleClick = (x, y) => {
     const newMatrix = ledMatrix.map((row) => [...row]);
@@ -101,7 +102,12 @@ function LEDMatrix({
     ({ arrayOfFontValues });
     const joinedTextArrays = joinMatrixsHorizontally(arrayOfFontValues);
     try {
-      const padded = pad2dArray(joinedTextArrays, width, height, 2);
+      const padded = pad2dArray(
+        joinedTextArrays,
+        width,
+        height,
+        leftPadding + 1
+      );
       ({ joinedTextArrays });
       ({ padded });
       setLedMatrix(padded);
