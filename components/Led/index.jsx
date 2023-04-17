@@ -1,4 +1,4 @@
-import font from '@/ledFont';
+import { OriginalFont } from '@/ledFont';
 import { convert2dArrayToColor } from '@/lib/General';
 import { joinMatrixsHorizontally, pad2dArray, sendData } from '@/lib/Led';
 import { useEffect, useState } from 'react';
@@ -7,15 +7,15 @@ function LEDMatrix({
   height = 8,
   width = 32,
   backgroundColor = '000000',
-  initalDrawColor = 'ff1985',
+  initialDrawColor = 'ff1985',
 }) {
   const blankSlate = Array.from({ length: height }, () =>
     Array.from({ length: width }, () => false)
   );
-  const [drawColor, setDrawColor] = useState(initalDrawColor);
+  const [drawColor, setDrawColor] = useState(initialDrawColor);
   const [ledMatrix, setLedMatrix] = useState(blankSlate);
-  const [textInput, setTextInput] = useState('123456');
-  const [colorInput, setColorInput] = useState(initalDrawColor);
+  const [inputText, setInputText] = useState('123456');
+  const [colorInput, setColorInput] = useState(initialDrawColor);
   const [brightness, setBrightness] = useState(10);
   const [errors, setErrors] = useState({
     maxLength: '',
@@ -23,7 +23,7 @@ function LEDMatrix({
   });
   const [leftPadding, setLeftPadding] = useState(0);
 
-  const handleClick = (x, y) => {
+  const handleClick = (ledMatrix, x, y) => {
     const newMatrix = ledMatrix.map((row) => [...row]);
     if (newMatrix[y][x] === true) {
       newMatrix[y][x] = false;
@@ -36,12 +36,12 @@ function LEDMatrix({
   const handleTextInput = (event) => {
     const { value } = event.target;
     console.log(value);
-    if (value.length < textInput.length) {
+    if (value.length < inputText.length) {
       setErrors((errors) => ({ ...errors, maxLength: '' }));
     } else if (errors.maxLength.length) {
       return;
     }
-    setTextInput(value);
+    setInputText(value);
   };
 
   const handleBrightnessInput = (event) => {
@@ -66,7 +66,7 @@ function LEDMatrix({
   const handleColorInput = (event) => {
     const { value } = event.target;
     console.log(value);
-    if (value.length < textInput.length) {
+    if (value.length < inputText.length) {
       setErrors((errors) => ({ ...errors, maxLength: '' }));
     } else if (errors.maxLength.length) {
       return;
@@ -80,7 +80,7 @@ function LEDMatrix({
   useEffect(() => {
     //Calculate New Matrix Array baised off of text and custom font
     const arrayOfFontValues = [];
-    const inputSplitArray = textInput.split('');
+    const inputSplitArray = inputText.split('');
     if (inputSplitArray.length < 1) {
       setLedMatrix(blankSlate);
       return;
@@ -90,7 +90,7 @@ function LEDMatrix({
         typeof character === 'number'
           ? Number(character)
           : String(character).toLowerCase();
-      const characterArray = font[transformedChar];
+      const characterArray = OriginalFont[transformedChar];
       if (!characterArray) {
         console.error('That character is not found in the selected font');
         return;
@@ -115,7 +115,7 @@ function LEDMatrix({
       console.error('No more space!');
       setErrors((errors) => ({ ...errors, maxLength: 'No more space!' }));
     }
-  }, [textInput]);
+  }, [inputText]);
 
   // This Converts our true false values to our background and drawColor hex values and sends to WLED
   useEffect(() => {
@@ -141,7 +141,7 @@ function LEDMatrix({
                   style={{
                     backgroundColor: `#${pixel ? drawColor : backgroundColor}`,
                   }}
-                  onClick={() => handleClick(x, y)}
+                  onClick={() => handleClick(ledMatrix, x, y)}
                 ></div>
               );
             })}
@@ -154,7 +154,7 @@ function LEDMatrix({
           <input
             className='bg-gray-200 py-2 px-4'
             onChange={handleTextInput}
-            value={textInput}
+            value={inputText}
           />
         </div>
         <div>
